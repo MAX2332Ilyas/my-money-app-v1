@@ -14,9 +14,11 @@ jobs:
           node-version: 20
 
       - name: Install Dependencies
+        working-directory: ./MyMoneyApp
         run: npm install
 
       - name: Capacitor Sync
+        working-directory: ./MyMoneyApp
         run: npx cap copy
 
       - name: Set up JDK 17
@@ -26,8 +28,8 @@ jobs:
           distribution: 'zulu'
 
       - name: Build with Gradle
+        working-directory: ./MyMoneyApp/android
         run: |
-          cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
@@ -35,4 +37,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: my-money-app-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: MyMoneyApp/android/app/build/outputs/apk/debug/app-debug.apk
