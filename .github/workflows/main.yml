@@ -19,7 +19,7 @@ jobs:
 
       - name: Capacitor Sync
         working-directory: ./MyMoneyApp
-        # استعملنا الاسم الكامل للحزمة باش npx يلقاها 100%
+        # استعملنا اسم الحزمة الكامل باش npx ما يتلفش
         run: npx @capacitor/cli copy
 
       - name: Set up JDK 17
