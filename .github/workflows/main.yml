@@ -19,8 +19,8 @@ jobs:
 
       - name: Capacitor Sync
         working-directory: ./MyMoneyApp
-        # استعملنا اسم الحزمة الكامل باش npx ما يتلفش
-        run: npx @capacitor/cli copy
+        # استعملنا sync عوض copy باش يتقاد الـ Gradle أوتوماتيكياً
+        run: npx @capacitor/cli sync
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -32,8 +32,9 @@ jobs:
         working-directory: ./MyMoneyApp/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
-
+          # زدنا هاد السطر باش يتفادى المشاكل ديال التضارب فـ Versions
+          ./gradlew assembleDebug --stacktrace
+          
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
