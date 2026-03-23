@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تتبع المصاريف والسلف</title>
+    <style>
+        /* ================= CSS (Design) ================= */
+        :root {
+            --primary: #4A90E2;
+            --income: #2ECC71;
+            --expense: #E74C3C;
+            --loan: #F39C12;
+            --bg-color: #F4F7F6;
+            --card-bg: #FFFFFF;
+            --text-dark: #333333;
+            --text-light: #777777;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            color: var(--text-dark);
+        }
+
+        /* App Container (باش تبان بحال شاشة التلفون) */
+        .app-container {
+            width: 100%;
+            max-width: 450px; /* قياس شاشة الهاتف */
+            background-color: var(--card-bg);
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding-bottom: 20px;
+        }
+
+        /* Header & Balance */
+        header {
+            background: linear-gradient(135deg, var(--primary), #2980B9);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .balance-box p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .balance-box h2 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-top: 5px;
+            direction: ltr;
+        }
+
+        /* Form Section */
+        .form-section {
+            padding: 20px;
+            margin-top: -20px;
+        }
+
+        .form-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .form-card input, .form-card select, .form-card textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .form-card input:focus, .form-card select:focus, .form-card textarea:focus {
+            border-color: var(--primary);
+        }
+
+        .form-card textarea {
+            resize: none;
+            height: 80px;
+        }
+
+        .btn-add {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-add:active {
+            transform: scale(0.98);
+        }
+
+        /* History Section */
+        .history-section {
+            padding: 0 20px;
+            margin-top: 10px;
+        }
+
+        .history-section h3 {
+            margin-bottom: 15px;
+            color: var(--text-dark);
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .transaction-list {
+            list-style-type: none;
+        }
+
+        .transaction-item {
+            background: var(--card-bg);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-right: 5px solid; /* اللون على حسب النوع */
+            position: relative;
+        }
+
+        .transaction-item.income { border-color: var(--income); }
+        .transaction-item.expense { border-color: var(--expense); }
+        .transaction-item.loan { border-color: var(--loan); }
+
+        .item-details h4 {
+            font-size: 1.1rem;
+            margin-bottom: 3px;
+        }
+
+        .item-details p {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 5px;
+        }
+
+        .item-details .reason-text {
+            font-size: 0.85rem;
+            color: #555;
+            background: #f9f9f9;
+            padding: 5px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        .item-amount {
+            font-weight: bold;
+            font-size: 1.1rem;
+            direction: ltr;
+        }
+
+        .income .item-amount { color: var(--income); }
+        .expense .item-amount { color: var(--expense); }
+        .loan .item-amount { color: var(--loan); }
+
+        /* Delete Button */
+        .btn-delete {
+            background: var(--expense);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- الرأس والرصيد -->
+        <header>
+            <h1>مدير المصاريف</h1>
+            <div class="balance-box">
+                <p>الرصيد الإجمالي</p>
+                <h2 id="balance">0 MAD</h2>
+            </div>
+        </header>
+
+        <!-- مكان إضافة العمليات -->
+        <section class="form-section">
+            <div class="form-card">
+                <form id="form">
+                    <select id="type">
+                        <option value="income">مدخول (+)</option>
+                        <option value="expense">مصروف (-)</option>
+                        <option value="loan">سلف لشخص (-)</option>
+                    </select>
+                    
+                    <input type="number" id="amount" placeholder="المبلغ (درهم)" required min="1">
+                    
+                    <input type="text" id="name" placeholder="الاسم / الوصف (مثلا: محمد، كراء..)" required>
+                    
+                    <input type="date" id="date" required>
+                    
+                    <!-- التفاصيل والسبب -->
+                    <textarea id="reason" placeholder="التفاصيل وعلاش (اختياري)..."></textarea>
+                    
+                    <button type="submit" class="btn-add">إضافة</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- لائحة العمليات -->
+        <section class="history-section">
+            <h3>تاريخ العمليات</h3>
+            <ul class="transaction-list" id="list">
+                <!-- العمليات غتبان هنا -->
+            </ul>
+        </section>
+    </div>
+
+    <!-- ================= JavaScript (Logic) ================= -->
+    <script>
+        // جلب العناصر من الواجهة
+        const balanceEl = document.getElementById('balance');
+        const listEl = document.getElementById('list');
+        const form = document.getElementById('form');
+        const typeEl = document.getElementById('type');
+        const amountEl = document.getElementById('amount');
+        const nameEl = document.getElementById('name');
+        const dateEl = document.getElementById('date');
+        const reasonEl = document.getElementById('reason');
+
+        // جلب البيانات المحفوظة في الهاتف (أو مصفوفة فارغة يلا كان جديد)
+        let transactions = JSON.parse(localStorage.getItem('my_transactions')) ||
