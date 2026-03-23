@@ -1,13 +1,15 @@
 {
   "name": "mymoneyapp",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "My Money Manager App",
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
   "author": "",
-  "license": "ISC",
-  "type": "commonjs"
+  "license": "ISC"
 }
