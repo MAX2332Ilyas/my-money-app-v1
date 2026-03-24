@@ -3,255 +3,426 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تتبع المصاريف والسلف</title>
+    <title>مدير الميزانية والديون</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
-        /* ================= CSS (Design) ================= */
+        /* ================= التصميم (CSS) ================= */
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
         :root {
-            --primary: #4A90E2;
-            --income: #2ECC71;
-            --expense: #E74C3C;
-            --loan: #F39C12;
-            --bg-color: #F4F7F6;
-            --card-bg: #FFFFFF;
-            --text-dark: #333333;
-            --text-light: #777777;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --income: #10b981;
+            --expense: #ef4444;
+            --loan: #f59e0b;
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            display: flex;
-            justify-content: center;
-            color: var(--text-dark);
-        }
-
-        /* App Container (باش تبان بحال شاشة التلفون) */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background-color: var(--bg); display: flex; justify-content: center; color: var(--text-main); }
+        
         .app-container {
-            width: 100%;
-            max-width: 450px; /* قياس شاشة الهاتف */
-            background-color: var(--card-bg);
-            min-height: 100vh;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            padding-bottom: 20px;
+            width: 100%; max-width: 480px; min-height: 100vh;
+            background: var(--bg); position: relative; padding-bottom: 80px;
         }
 
-        /* Header & Balance */
-        header {
-            background: linear-gradient(135deg, var(--primary), #2980B9);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        /* --- الهيدر (الرصيد) --- */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white; padding: 30px 20px; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2); text-align: center;
+        }
+        .header h1 { font-size: 1.2rem; font-weight: 600; margin-bottom: 15px; }
+        .balance-title { font-size: 0.9rem; opacity: 0.9; }
+        .balance-amount { font-size: 2.8rem; font-weight: 700; margin: 5px 0; direction: ltr; }
+        
+        .stats { display: flex; justify-content: space-between; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin-top: 15px; }
+        .stat-item h3 { font-size: 0.8rem; opacity: 0.9; }
+        .stat-item p { font-size: 1.1rem; font-weight: 700; direction: ltr; }
+        .stat-item.in p { color: #a7f3d0; }
+        .stat-item.out p { color: #fecaca; }
+        .stat-item.ln p { color: #fde68a; }
+
+        /* --- الأقسام (Tabs) --- */
+        .tab-content { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- الفورم --- */
+        .card { background: var(--card); padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; color: var(--text-muted); }
+        .form-control { width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 1rem; background: #f9fafb; outline: none; transition: 0.2s; }
+        .form-control:focus { border-color: var(--primary); background: #fff; }
+        textarea.form-control { resize: none; height: 80px; }
+        
+        .btn-submit {
+            width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 10px;
+            font-size: 1.1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
         }
 
-        header h1 {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
+        /* --- أزرار الفلترة --- */
+        .filters { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
+        .filter-btn {
+            padding: 8px 15px; border: 1px solid #e5e7eb; border-radius: 20px; background: white;
+            color: var(--text-muted); font-size: 0.85rem; cursor: pointer; white-space: nowrap; transition: 0.3s;
+        }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .btn-pdf {
+            width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 10px;
+            font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
 
-        .balance-box p {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-
-        .balance-box h2 {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-top: 5px;
-            direction: ltr;
-        }
-
-        /* Form Section */
-        .form-section {
-            padding: 20px;
-            margin-top: -20px;
-        }
-
-        .form-card {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        }
-
-        .form-card input, .form-card select, .form-card textarea {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        .form-card input:focus, .form-card select:focus, .form-card textarea:focus {
-            border-color: var(--primary);
-        }
-
-        .form-card textarea {
-            resize: none;
-            height: 80px;
-        }
-
-        .btn-add {
-            width: 100%;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 15px;
-            font-size: 1.1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        .btn-add:active {
-            transform: scale(0.98);
-        }
-
-        /* History Section */
-        .history-section {
-            padding: 0 20px;
-            margin-top: 10px;
-        }
-
-        .history-section h3 {
-            margin-bottom: 15px;
-            color: var(--text-dark);
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 5px;
-        }
-
-        .transaction-list {
-            list-style-type: none;
-        }
-
+        /* --- قائمة العمليات --- */
+        .list-header { font-size: 1.2rem; margin-bottom: 15px; font-weight: 700; }
         .transaction-item {
-            background: var(--card-bg);
-            margin-bottom: 10px;
-            padding: 15px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border-right: 5px solid; /* اللون على حسب النوع */
-            position: relative;
+            background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-right: 5px solid; position: relative;
         }
-
         .transaction-item.income { border-color: var(--income); }
         .transaction-item.expense { border-color: var(--expense); }
         .transaction-item.loan { border-color: var(--loan); }
-
-        .item-details h4 {
-            font-size: 1.1rem;
-            margin-bottom: 3px;
-        }
-
-        .item-details p {
-            font-size: 0.85rem;
-            color: var(--text-light);
-            margin-bottom: 5px;
-        }
-
-        .item-details .reason-text {
-            font-size: 0.85rem;
-            color: #555;
-            background: #f9f9f9;
-            padding: 5px;
-            border-radius: 5px;
-            display: inline-block;
-        }
-
-        .item-amount {
-            font-weight: bold;
-            font-size: 1.1rem;
-            direction: ltr;
-        }
-
+        
+        .item-flex { display: flex; justify-content: space-between; align-items: center; }
+        .item-name { font-weight: 700; font-size: 1.1rem; }
+        .item-date { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; }
+        .item-amount { font-weight: 700; font-size: 1.2rem; direction: ltr; }
         .income .item-amount { color: var(--income); }
         .expense .item-amount { color: var(--expense); }
         .loan .item-amount { color: var(--loan); }
+        .item-reason { background: #f3f4f6; padding: 8px; border-radius: 8px; font-size: 0.85rem; margin-top: 10px; color: #4b5563; }
 
-        /* Delete Button */
-        .btn-delete {
-            background: var(--expense);
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            margin-right: 15px;
+        /* --- تصميم قسم السلف --- */
+        .loan-details { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e5e7eb; }
+        .progress-bar { width: 100%; background: #e5e7eb; height: 8px; border-radius: 4px; margin: 5px 0; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--income); transition: 0.3s; }
+        .loan-status-text { font-size: 0.85rem; font-weight: 600; display: flex; justify-content: space-between; }
+        .btn-repay { background: var(--income); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; margin-top: 10px; width: 100%; }
+        .repayment-history { font-size: 0.8rem; color: var(--text-muted); margin-top: 8px; }
+
+        .btn-delete { color: var(--expense); background: none; border: none; font-size: 1.2rem; cursor: pointer; position: absolute; left: 15px; top: 15px; }
+
+        /* --- القائمة السفلية --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%; max-width: 480px; background: var(--card);
+            display: flex; justify-content: space-around; padding: 12px 0;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.05); border-top-left-radius: 20px; border-top-right-radius: 20px; z-index: 100;
         }
+        .nav-item { text-align: center; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; flex: 1; }
+        .nav-item.active { color: var(--primary); font-weight: 700; }
+        .nav-item i { display: block; font-size: 1.4rem; margin-bottom: 4px; }
+
+        /* --- نوافذ منبثقة (Modals) --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: flex-end; z-index: 1000; padding-bottom: 20px; }
+        .modal.active { display: flex; animation: fadeBg 0.3s; }
+        
+        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 95%; max-width: 400px; animation: slideUp 0.3s; text-align: center; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes fadeBg { from { background: rgba(0,0,0,0); } to { background: rgba(0,0,0,0.5); } }
+
+        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-cancel { flex: 1; padding: 12px; border: none; border-radius: 10px; background: #e5e7eb; font-weight: 600; cursor: pointer; }
+        .btn-confirm { flex: 1; padding: 12px; border: none; border-radius: 10px; background: var(--primary); color: white; font-weight: 600; cursor: pointer; }
+        .btn-danger { flex: 1; padding: 12px; border: none; border-radius: 10px; background: var(--expense); color: white; font-weight: 600; cursor: pointer; }
+        .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .checkbox-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; font-weight: 600; color: var(--expense); }
+        .checkbox-container input { width: 18px; height: 18px; accent-color: var(--expense); }
+
     </style>
 </head>
 <body>
 
     <div class="app-container">
-        <!-- الرأس والرصيد -->
-        <header>
-            <h1>مدير المصاريف</h1>
-            <div class="balance-box">
-                <p>الرصيد الإجمالي</p>
-                <h2 id="balance">0 MAD</h2>
+        <!-- الهيدر -->
+        <div class="header">
+            <h1><i class="fas fa-wallet"></i> ميزانيتي</h1>
+            <div class="balance-title">الرصيد الإجمالي</div>
+            <div class="balance-amount" id="total-balance">0.00</div>
+            <div class="stats">
+                <div class="stat-item in"><h3>المداخيل</h3><p id="total-income">0</p></div>
+                <div class="stat-item out"><h3>المصاريف</h3><p id="total-expense">0</p></div>
+                <div class="stat-item ln"><h3>سلف للغير</h3><p id="total-loan">0</p></div>
             </div>
-        </header>
+        </div>
 
-        <!-- مكان إضافة العمليات -->
-        <section class="form-section">
-            <div class="form-card">
-                <form id="form">
-                    <select id="type">
-                        <option value="income">مدخول (+)</option>
-                        <option value="expense">مصروف (-)</option>
-                        <option value="loan">سلف لشخص (-)</option>
-                    </select>
-                    
-                    <input type="number" id="amount" placeholder="المبلغ (درهم)" required min="1">
-                    
-                    <input type="text" id="name" placeholder="الاسم / الوصف (مثلا: محمد، كراء..)" required>
-                    
-                    <input type="date" id="date" required>
-                    
-                    <!-- التفاصيل والسبب -->
-                    <textarea id="reason" placeholder="التفاصيل وعلاش (اختياري)..."></textarea>
-                    
-                    <button type="submit" class="btn-add">إضافة</button>
+        <!-- قسم إضافة عملية -->
+        <div id="tab-add" class="tab-content active">
+            <div class="card">
+                <form id="main-form">
+                    <div class="form-group">
+                        <label>نوع العملية</label>
+                        <select id="type" class="form-control">
+                            <option value="expense">مصروف (-)</option>
+                            <option value="income">مدخول (+)</option>
+                            <option value="loan">سلف لشخص آخر (-)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>المبلغ (درهم)</label>
+                        <input type="number" id="amount" class="form-control" required min="1" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label>العنوان / الشخص</label>
+                        <input type="text" id="name" class="form-control" placeholder="مثال: التقضية، كراء، أحمد..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>التاريخ</label>
+                        <input type="date" id="date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>التفاصيل (اختياري)</label>
+                        <textarea id="reason" class="form-control" placeholder="علاش صرفتي الفلوس، أو تفاصيل السلف..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit"><i class="fas fa-plus"></i> حفظ العملية</button>
                 </form>
             </div>
-        </section>
+        </div>
 
-        <!-- لائحة العمليات -->
-        <section class="history-section">
-            <h3>تاريخ العمليات</h3>
-            <ul class="transaction-list" id="list">
-                <!-- العمليات غتبان هنا -->
-            </ul>
-        </section>
+        <!-- قسم السجل -->
+        <div id="tab-history" class="tab-content">
+            <h2 class="list-header">سجل العمليات والديون</h2>
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterTransactions('all', this)">الكل</button>
+                <button class="filter-btn" onclick="filterTransactions('income', this)">المداخيل</button>
+                <button class="filter-btn" onclick="filterTransactions('expense', this)">المصاريف</button>
+                <button class="filter-btn" onclick="filterTransactions('loan', this)">الديون</button>
+            </div>
+            <button class="btn-pdf" onclick="generatePDF()"><i class="fas fa-file-pdf"></i> تحميل التقرير (PDF)</button>
+            <div id="pdf-content"><div id="transactions-list"></div></div>
+        </div>
+
+        <!-- القائمة السفلية -->
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="switchTab('add', this)">
+                <i class="fas fa-plus-circle"></i> إضافة
+            </div>
+            <div class="nav-item" onclick="switchTab('history', this)">
+                <i class="fas fa-list-alt"></i> السجل
+            </div>
+        </div>
+
+        <!-- نافذة تسديد السلف -->
+        <div class="modal" id="repay-modal">
+            <div class="modal-content">
+                <h3 style="margin-bottom: 15px;">استرجاع السلف</h3>
+                <input type="hidden" id="repay-id">
+                <div class="form-group text-right">
+                    <label>المبلغ المسترجع (درهم)</label>
+                    <input type="number" id="repay-amount" class="form-control" required min="1" step="0.5">
+                </div>
+                <div class="form-group text-right">
+                    <label>تاريخ الاسترجاع</label>
+                    <input type="date" id="repay-date" class="form-control" required>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn-cancel" onclick="closeModal('repay-modal')">إلغاء</button>
+                    <button class="btn-confirm" onclick="submitRepayment()">حفظ التسديد</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- نافذة تأكيد الحذف الجديدة -->
+        <div class="modal" id="delete-modal">
+            <div class="modal-content">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--expense); margin-bottom: 10px;"></i>
+                <h3 style="margin-bottom: 10px;">تأكيد الحذف</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">واش متأكد بغيتي تمسح هاد العملية بصفة نهائية؟ (مغاديش تقدر ترجعها).</p>
+                
+                <!-- علامة التأكيد "الصح" -->
+                <div class="checkbox-container">
+                    <input type="checkbox" id="confirm-delete-check" onchange="toggleDeleteButton()">
+                    <label for="confirm-delete-check">نعم، أنا متأكد من الحذف</label>
+                </div>
+
+                <input type="hidden" id="delete-id">
+                
+                <div class="modal-buttons">
+                    <button class="btn-cancel" onclick="closeModal('delete-modal')">تراجع</button>
+                    <!-- الزر غيكون حابس (disabled) حتى يورك على الصح -->
+                    <button class="btn-danger" id="btn-confirm-delete" onclick="executeDelete()" disabled><i class="fas fa-trash"></i> حذف نهائي</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- ================= JavaScript (Logic) ================= -->
+    <!-- ================= الـ JavaScript (العقل المدبر) ================= -->
     <script>
-        // جلب العناصر من الواجهة
-        const balanceEl = document.getElementById('balance');
-        const listEl = document.getElementById('list');
-        const form = document.getElementById('form');
-        const typeEl = document.getElementById('type');
-        const amountEl = document.getElementById('amount');
-        const nameEl = document.getElementById('name');
-        const dateEl = document.getElementById('date');
-        const reasonEl = document.getElementById('reason');
+        document.getElementById('date').valueAsDate = new Date();
+        document.getElementById('repay-date').valueAsDate = new Date();
 
-        // جلب البيانات المحفوظة في الهاتف (أو مصفوفة فارغة يلا كان جديد)
-        let transactions = JSON.parse(localStorage.getItem('my_transactions')) ||
+        let transactions = JSON.parse(localStorage.getItem('pro_money_app_v4')) ||[];
+        let currentFilter = 'all';
+
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            element.classList.add('active');
+            if(tabId === 'history') updateUI();
+        }
+
+        document.getElementById('main-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newTransaction = {
+                id: Date.now(),
+                type: document.getElementById('type').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                name: document.getElementById('name').value,
+                date: document.getElementById('date').value,
+                reason: document.getElementById('reason').value,
+                paidAmount: 0, 
+                repayments:[] 
+            };
+            transactions.push(newTransaction);
+            saveData(); updateUI();
+            document.getElementById('amount').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('reason').value = '';
+            alert("تمت الإضافة بنجاح!");
+            switchTab('history', document.querySelectorAll('.nav-item')[1]);
+        });
+
+        function filterTransactions(type, btnElement) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            currentFilter = type;
+            updateUI();
+        }
+
+        function saveData() { localStorage.setItem('pro_money_app_v4', JSON.stringify(transactions)); }
+
+        // --- دوال استرجاع السلف ---
+        function openRepayModal(id) {
+            document.getElementById('repay-id').value = id;
+            document.getElementById('repay-amount').value = '';
+            document.getElementById('repay-modal').classList.add('active');
+        }
+
+        function submitRepayment() {
+            const id = parseInt(document.getElementById('repay-id').value);
+            const repayAmount = parseFloat(document.getElementById('repay-amount').value);
+            const repayDate = document.getElementById('repay-date').value;
+
+            if(!repayAmount || repayAmount <= 0) return alert('المرجو إدخال مبلغ صحيح');
+
+            const index = transactions.findIndex(t => t.id === id);
+            if(index !== -1) {
+                let remaining = transactions[index].amount - transactions[index].paidAmount;
+                if(repayAmount > remaining) return alert('المبلغ المدخل أكبر من الباقي في السلف!');
+
+                transactions[index].paidAmount += repayAmount;
+                transactions[index].repayments.push({ amount: repayAmount, date: repayDate });
+                
+                saveData(); updateUI(); closeModal('repay-modal');
+            }
+        }
+
+        // --- دوال نافذة التأكيد قبل الحذف ---
+        function openDeleteModal(id) {
+            document.getElementById('delete-id').value = id;
+            // كنرجعو المربع خاوي والزر حابس
+            document.getElementById('confirm-delete-check').checked = false;
+            document.getElementById('btn-confirm-delete').disabled = true;
+            document.getElementById('delete-modal').classList.add('active');
+        }
+
+        function toggleDeleteButton() {
+            // كيحل الزر غير الى كان المربع مفعل
+            const isChecked = document.getElementById('confirm-delete-check').checked;
+            document.getElementById('btn-confirm-delete').disabled = !isChecked;
+        }
+
+        function executeDelete() {
+            const id = parseInt(document.getElementById('delete-id').value);
+            transactions = transactions.filter(t => t.id !== id);
+            saveData();
+            updateUI();
+            closeModal('delete-modal');
+        }
+
+        // --- إغلاق النوافذ المنبثقة بشكل عام ---
+        function closeModal(modalId) { 
+            document.getElementById(modalId).classList.remove('active'); 
+        }
+
+        // --- تحميل PDF ---
+        function generatePDF() {
+            const element = document.getElementById('pdf-content');
+            const opt = { margin: 10, filename: 'تقرير_المصاريف.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+            const buttons = element.querySelectorAll('button');
+            buttons.forEach(btn => btn.style.display = 'none');
+            html2pdf().set(opt).from(element).save().then(() => { buttons.forEach(btn => btn.style.display = 'block'); });
+        }
+
+        // --- تحديث واجهة المستخدم ---
+        function updateUI() {
+            const listEl = document.getElementById('transactions-list');
+            listEl.innerHTML = '';
+            let totalIn = 0, totalOut = 0, totalLoansGiven = 0, totalLoansRepaid = 0;
+
+            transactions.forEach(t => {
+                if(t.type === 'income') totalIn += t.amount;
+                if(t.type === 'expense') totalOut += t.amount;
+                if(t.type === 'loan') { totalLoansGiven += t.amount; totalLoansRepaid += t.paidAmount; }
+            });
+
+            let sortedTransactions = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+            let filteredTransactions = sortedTransactions.filter(t => currentFilter === 'all' || t.type === currentFilter);
+
+            filteredTransactions.forEach(t => {
+                let icon = t.type === 'income' ? '+' : '-';
+                let loanHTML = '';
+
+                if(t.type === 'loan') {
+                    let progress = (t.paidAmount / t.amount) * 100;
+                    let remaining = t.amount - t.paidAmount;
+                    let statusTxt = remaining === 0 ? '<span style="color:var(--income)">تم التسديد بالكامل ✓</span>' : `باقي: ${remaining} درهم`;
+                    let historyHTML = t.repayments.map(r => `<div><i class="fas fa-check-circle" style="color:var(--income)"></i> رجع ${r.amount} د.م نهار ${r.date}</div>`).join('');
+
+                    loanHTML = `
+                        <div class="loan-details">
+                            <div class="loan-status-text"><span>تم إرجاع: ${t.paidAmount}</span> ${statusTxt}</div>
+                            <div class="progress-bar"><div class="progress-fill" style="width: ${progress}%"></div></div>
+                            <div class="repayment-history">${historyHTML}</div>
+                            ${remaining > 0 ? `<button class="btn-repay" onclick="openRepayModal(${t.id})"><i class="fas fa-hand-holding-usd"></i> استرجاع جزء أو كل المبلغ</button>` : ''}
+                        </div>
+                    `;
+                }
+
+                listEl.innerHTML += `
+                    <div class="transaction-item ${t.type}">
+                        <!-- بدلنا دالة الحذف باش تفتح نافذة التأكيد عوض تمسح نيشان -->
+                        <button class="btn-delete" onclick="openDeleteModal(${t.id})"><i class="fas fa-times"></i></button>
+                        <div class="item-flex">
+                            <div>
+                                <div class="item-name">${t.name}</div>
+                                <div class="item-date"><i class="far fa-calendar-alt"></i> ${t.date}</div>
+                            </div>
+                            <div class="item-amount">${icon}${t.amount}</div>
+                        </div>
+                        ${t.reason ? `<div class="item-reason">${t.reason}</div>` : ''}
+                        ${loanHTML}
+                    </div>
+                `;
+            });
+
+            if(filteredTransactions.length === 0) listEl.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">لا توجد أي عمليات في هذا القسم</p>';
+
+            document.getElementById('total-balance').innerText = (totalIn - totalOut - totalLoansGiven + totalLoansRepaid).toFixed(2);
+            document.getElementById('total-income').innerText = totalIn.toFixed(2);
+            document.getElementById('total-expense').innerText = totalOut.toFixed(2);
+            document.getElementById('total-loan').innerText = (totalLoansGiven - totalLoansRepaid).toFixed(2);
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
